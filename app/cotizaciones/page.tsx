@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { getUserRole, saveCotizacion, getNextFolio } from "./actions";
+import Link from "next/link";
 
 export default function CotizacionPage() {
     const [fecha, setFecha] = useState("");
@@ -21,18 +23,30 @@ export default function CotizacionPage() {
     const [tasaIva, setTasaIva] = useState(16);
     const [statusMessage, setStatusMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     useEffect(() => {
         const hoy = new Date().toISOString().split('T')[0];
         setFecha(hoy);
-        setFolio(`${hoy}-#1`);
+        
+        // Obtener el folio correcto de la base de datos
+        getNextFolio(hoy).then(nuevoFolio => setFolio(nuevoFolio));
+
+        getUserRole().then(role => {
+            setUserRole(role || 'sin acceso');
+        }).catch(err => {
+            console.error("Error obteniendo rol:", err);
+            setUserRole('error');
+        });
     }, []);
 
-    const handleFechaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFechaChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const newFecha = e.target.value;
         setFecha(newFecha);
-        const correlativo = folio.split('-').pop() || '#1';
-        setFolio(`${newFecha}-${correlativo}`);
+        
+        // Al cambiar la fecha, comprobamos el folio que le toca a ese nuevo día
+        const nuevoFolio = await getNextFolio(newFecha);
+        setFolio(nuevoFolio);
     };
 
     const toggleDireccion = () => setMostrarDireccion(!mostrarDireccion);
@@ -90,13 +104,15 @@ export default function CotizacionPage() {
         };
 
         try {
-            // Simulando envío a la API
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            console.log("Datos a enviar:", payload);
-            setStatusMessage({ text: "¡Cotización enviada exitosamente a la base de datos!", type: "success" });
+            const response = await saveCotizacion(payload);
+            if (response.success) {
+                setStatusMessage({ text: "¡Cotización guardada exitosamente en la base de datos!", type: "success" });
+            } else {
+                setStatusMessage({ text: `Error al guardar: ${response.error}`, type: "error" });
+            }
         } catch (error) {
             console.error(error);
-            setStatusMessage({ text: "Ocurrió un error al enviar.", type: "error" });
+            setStatusMessage({ text: "Ocurrió un error inesperado al enviar.", type: "error" });
         } finally {
             setIsSubmitting(false);
             setTimeout(() => setStatusMessage(null), 5000);
@@ -125,6 +141,21 @@ export default function CotizacionPage() {
 
             <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:rounded-none">
                 
+                <div className="bg-slate-800 text-white p-3 text-sm flex justify-between items-center no-print flex-wrap gap-2">
+                    <div className="flex items-center gap-4">
+                        <Link href="/" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
+                            <i className="fas fa-arrow-left"></i> Menú Principal
+                        </Link>
+                        <div className="border-l border-slate-600 pl-4">
+                            <span className="font-semibold text-slate-300">Rol:</span> <span className="uppercase font-bold text-teal-400">{userRole === null ? 'Cargando...' : userRole}</span>
+                            {userRole === 'reportero' && <span className="ml-2 text-xs italic text-slate-400">(Modo de solo lectura y generación de PDF)</span>}
+                        </div>
+                    </div>
+                    <Link href="/cotizaciones/list" className="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-xs font-bold transition-colors">
+                        Ver Base de Datos
+                    </Link>
+                </div>
+
                 {statusMessage && (
                     <div className={`text-center p-3 text-sm font-semibold text-white transition-all duration-300 ${statusMessage.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
                         {statusMessage.text}
@@ -323,7 +354,7 @@ export default function CotizacionPage() {
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center">
                                         <span className="text-slate-700 mr-1">$</span>
-                                        <input type="number" name="tarjeta_credito" defaultValue="2806.81" step="0.01" className="text-right border border-slate-300 rounded p-1 text-slate-800 font-bold w-24 bg-white focus:ring-1 focus:ring-slate-500" />
+                                        <input type="number" name="tarjeta_credito" defaultValue="0.00" step="0.01" className="text-right border border-slate-300 rounded p-1 text-slate-800 font-bold w-24 bg-white focus:ring-1 focus:ring-slate-500" />
                                     </div>
                                     <span className="text-xs text-slate-500 mt-1">/ mes</span>
                                 </div>
@@ -337,8 +368,8 @@ export default function CotizacionPage() {
                             <i className="fas fa-globe"></i> ecotermicsolar.com.mx
                         </div>
                         <div className="flex gap-4">
-                            <span><i className="fas fa-phone"></i> 3767 5037 55</span>
-                            <span><i className="fas fa-phone"></i> 55 3652 7139</span>
+                            <span><i className="fas fa-phone"></i> Oficina: 3767 5037 55</span>
+                            <span><i className="fab fa-whatsapp text-green-600"></i> WhatsApp: 55 3652 7139</span>
                         </div>
                         <div className="flex items-center gap-2">
                             <i className="fas fa-envelope"></i> ecotermicsolar@gmail.com
@@ -349,10 +380,12 @@ export default function CotizacionPage() {
                         <button type="button" onClick={() => window.print()} className="px-6 py-2 border border-gray-300 rounded text-gray-700 font-medium hover:bg-gray-100 transition-colors flex items-center gap-2">
                             <i className="fas fa-print"></i> Imprimir / PDF
                         </button>
-                        <button type="submit" disabled={isSubmitting} className={`px-8 py-3 bg-slate-800 rounded text-white font-bold shadow hover:bg-slate-900 focus:ring-4 focus:ring-slate-300 transition-colors flex items-center gap-2 ${isSubmitting ? 'opacity-70' : ''}`}>
-                            {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-paper-plane"></i>}
-                            {isSubmitting ? 'Enviando...' : 'Enviar Cotización API'}
-                        </button>
+                        {userRole !== 'reportero' && (
+                            <button type="submit" disabled={isSubmitting} className={`px-8 py-3 bg-slate-800 rounded text-white font-bold shadow hover:bg-slate-900 focus:ring-4 focus:ring-slate-300 transition-colors flex items-center gap-2 ${isSubmitting ? 'opacity-70' : ''}`}>
+                                {isSubmitting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-save"></i>}
+                                {isSubmitting ? 'Guardando...' : 'Guardar Cotización en DB'}
+                            </button>
+                        )}
                     </div>
 
                 </form>

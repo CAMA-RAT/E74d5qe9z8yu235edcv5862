@@ -20,8 +20,10 @@ import {
   ChevronUp,
   Save,
   Send,
-  Users
+  Users,
+  ArrowLeft
 } from 'lucide-react';
+import Link from 'next/link';
 
 // --- INTERFACES ---
 interface ActivityImage {
@@ -123,7 +125,7 @@ const FIXED_HASHTAG = '#SoyParteDelCambio';
 
 const DEFAULT_COLLABORATORS = [
   { id: 1, name: 'Israel Tapia', initials: 'Israel T.' },
-  { id: 2, name: 'Angelica', initials: 'Angelica' },
+  { id: 2, name: 'Angélica', initials: 'Angélica' },
   { id: 3, name: 'Guillermo', initials: 'Guillermo' },
   { id: 4, name: 'Andy', initials: 'Andy' },
   { id: 5, name: 'Mari', initials: 'Mari' }
@@ -251,18 +253,6 @@ export default function App() {
     }));
   };
 
-  const concluirReporte = () => {
-    if (confirm("¿Estás seguro de concluir este reporte y comenzar uno nuevo? El actual se guardará en tu historial local.")) {
-      // Reiniciar estado para uno nuevo
-      setReportId(Date.now().toString());
-      setDate(new Date().toISOString().split('T')[0]);
-      setActivities([{ id: 1, images: [], description: '' }]);
-      setPersonnel({ elaboro: '', superviso: '', tecnico: '' });
-      setClientData({ nombre: '', direccion: '', telefono: '', contacto: '' });
-      setShowClientForm(false);
-      window.scrollTo(0, 0);
-    }
-  };
 
   const loadReport = (id: string) => {
     const report = savedReports.find(r => r.id === id);
@@ -276,17 +266,6 @@ export default function App() {
     }
   };
 
-  // --- DISTRIBUCIÓN BÁSICA ---
-  const sendWhatsApp = () => {
-    const text = encodeURIComponent(`Hola, te comparto el Reporte de Actividades del ${formattedDate}. Por favor adjunta el archivo PDF aquí.`);
-    window.open(`https://wa.me/?text=${text}`, '_blank');
-  };
-
-  const sendEmail = () => {
-    const subject = encodeURIComponent(`Reporte de Actividades - ${formattedDate}`);
-    const body = encodeURIComponent(`Adjunto el reporte de actividades correspondiente a la fecha: ${formattedDate}. \n\n[Por favor no olvides adjuntar el archivo PDF antes de enviar el correo]`);
-    window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
-  };
 
   const formattedDate = date.split('-').reverse().join(' de ')
     .replace('de 01', 'de Enero').replace('de 02', 'de Febrero').replace('de 03', 'de Marzo')
@@ -312,8 +291,11 @@ export default function App() {
         </div>
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
+            <Link href="/" className="text-slate-400 hover:text-slate-600 transition-colors mr-2 flex items-center justify-center p-2 rounded-full hover:bg-slate-100">
+              <ArrowLeft size={20} />
+            </Link>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/ecologo.svg" alt="Ecotermic Logo" className="h-10 w-auto object-contain" />
+            <img src="/ecologo.svg" alt="Ecotermic Logo" className="h-10 w-auto object-contain hidden sm:block" />
             <h1 className="text-xl font-black text-blue tracking-tight" style={{ color: BRAND.blue }}>
               Reporte de Actividades
             </h1>
@@ -561,7 +543,9 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {(['elaboro', 'superviso', 'tecnico'] as const).map((field) => (
                 <div key={field} className="space-y-3">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">{field}</label>
+                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest">
+                    {{ elaboro: 'Elaboró', superviso: 'Supervisó', tecnico: 'Técnico' }[field]}
+                  </label>
                   
                   {/* Select de asignación rápida */}
                   <div className="relative">
@@ -590,14 +574,6 @@ export default function App() {
             {/* Acciones Principales */}
             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
               <button 
-                onClick={concluirReporte}
-                className="flex items-center justify-center gap-2 text-slate-700 bg-white border-2 border-slate-200 px-8 py-4 rounded-2xl font-bold shadow-sm hover:bg-slate-50 transition-all"
-              >
-                <Save size={20} />
-                Concluir Reporte
-              </button>
-              
-              <button 
                 onClick={() => window.print()}
                 className="flex items-center justify-center gap-3 text-white px-12 py-4 rounded-2xl font-black text-lg shadow-xl hover:-translate-y-1 transition-all"
                 style={{ backgroundColor: BRAND.blue }}
@@ -605,28 +581,6 @@ export default function App() {
                 <Printer size={24} />
                 Generar Reporte PDF
               </button>
-            </div>
-
-            {/* Opciones de Distribución (Nativas) */}
-            <div className="pt-6 border-t border-slate-200 w-full max-w-lg">
-              <p className="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Compartir Documento Generado</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button 
-                  onClick={sendWhatsApp}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-[#25D366] text-white rounded-xl font-bold shadow-md hover:bg-[#1ebd59] transition-all text-sm"
-                >
-                  <MessageCircle size={18} />
-                  Enviar por WhatsApp
-                </button>
-                <button 
-                  onClick={sendEmail}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 text-white rounded-xl font-bold shadow-md hover:bg-slate-700 transition-all text-sm"
-                >
-                  <Mail size={18} />
-                  Enviar por Correo
-                </button>
-              </div>
-              <p className="text-center text-[10px] text-slate-400 mt-3 italic">* Debes adjuntar manualmente el PDF al abrir la aplicación.</p>
             </div>
 
           </div>
