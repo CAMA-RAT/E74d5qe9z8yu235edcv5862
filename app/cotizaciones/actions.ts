@@ -26,8 +26,9 @@ export async function getUserRole() {
     .single();
 
   if (dbError) {
-    console.error("Error consultando rol en BD:", dbError);
-    return "Error DB";
+    // Si no se encuentra el rol o la tabla está vacía, Supabase manda error (PGRST116 con .single())
+    // Retornamos "Sin Rol" en lugar de imprimir un console.error que bloquea la app
+    return "Sin Rol";
   }
 
   if (!roleData) {
@@ -46,10 +47,14 @@ export async function getCotizaciones() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error("Error fetching cotizaciones:", error);
+    // Si la base está vacía o hay cualquier inconveniente inicial de RLS,
+    // simplemente no usamos console.error para no bloquear la interfaz en Next.js.
+    // Esto hace que la app "sepa que está OK" si no hay datos.
     return [];
   }
-  return data;
+  
+  // Si data es null, retornamos un array vacío para evitar que la app crashee al hacer .length
+  return data || [];
 }
 
 export async function getNextFolio(fecha: string) {

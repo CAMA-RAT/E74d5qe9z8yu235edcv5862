@@ -141,19 +141,20 @@ export default function CotizacionPage() {
 
             <div className="max-w-5xl mx-auto bg-white shadow-xl rounded-xl overflow-hidden print:shadow-none print:rounded-none">
                 
-                <div className="bg-slate-800 text-white p-3 text-sm flex justify-between items-center no-print flex-wrap gap-2">
+                <div className="bg-slate-800 text-white p-3 text-sm flex justify-between items-center no-print flex-wrap gap-2 rounded-t-xl">
                     <div className="flex items-center gap-4">
                         <Link href="/" className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors">
                             <i className="fas fa-arrow-left"></i> Menú Principal
                         </Link>
-                        <div className="border-l border-slate-600 pl-4">
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <Link href="/cotizaciones/list" className="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-xs font-bold transition-colors">
+                            Ver Base de Datos
+                        </Link>
+                        <div className="text-right border-l border-slate-600 pl-4 hidden md:block">
                             <span className="font-semibold text-slate-300">Rol:</span> <span className="uppercase font-bold text-teal-400">{userRole === null ? 'Cargando...' : userRole}</span>
-                            {userRole === 'reportero' && <span className="ml-2 text-xs italic text-slate-400">(Modo de solo lectura y generación de PDF)</span>}
                         </div>
                     </div>
-                    <Link href="/cotizaciones/list" className="bg-slate-700 hover:bg-slate-600 px-3 py-1 rounded text-xs font-bold transition-colors">
-                        Ver Base de Datos
-                    </Link>
                 </div>
 
                 {statusMessage && (

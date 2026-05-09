@@ -1,6 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Lista de emails sin acceso a módulos restringidos
+const BLOCKED_EMAILS = ['asisttup@gmail.com'];
+// Rutas protegidas que los usuarios bloqueados no pueden ver
+const RESTRICTED_PATHS = ['/cotizaciones'];
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -48,6 +53,19 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)
+  }
+
+  // Bloquear acceso por email: si el usuario está en la lista negra
+  // y trata de acceder a rutas restringidas, redirigir a página de acceso denegado
+  if (user && user.email && BLOCKED_EMAILS.includes(user.email)) {
+    const isRestrictedPath = RESTRICTED_PATHS.some(path =>
+      request.nextUrl.pathname.startsWith(path)
+    );
+    if (isRestrictedPath) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/acceso-denegado'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse
