@@ -38,7 +38,7 @@ export default async function CotizacionesListPage() {
         </div>
 
         <CotizacionesTable cotizaciones={cotizaciones} />
-      </div>
+      </main>
     </div>
   );
 }
