@@ -1,8 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
-import { FileText, FileSpreadsheet, Building2, ArrowRight } from 'lucide-react';
+import { FileText, FileSpreadsheet } from 'lucide-react';
+import { getUserRole } from './cotizaciones/actions';
 
-export default function Home() {
+export default async function Home() {
+  const role = await getUserRole();
+  const isAdminOrEditor = role === 'admin' || role === 'editor' || role === 'super_admin';
+
   const BRAND = {
     green: '#8cc63f',
     teal: '#2bb6b1',
@@ -23,69 +27,85 @@ export default function Home() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/ecologo.svg" alt="Ecotermic Logo" className="h-10 w-auto object-contain" />
           </div>
+          <div className="text-sm font-bold text-slate-500 uppercase tracking-widest hidden md:block">
+            Rol: <span className="text-[#2bb6b1]">{role}</span>
+          </div>
         </div>
       </header>
 
       {/* CONTENIDO PRINCIPAL */}
       <main className="flex-grow flex items-center justify-center p-4">
-        <div className="max-w-4xl w-full">
+        <div className="max-w-5xl w-full">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-slate-800">
-              Bienvenido
+              Panel de Control
             </h2>
             <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-              Selecciona la herramienta que necesitas utilizar el día de hoy para gestionar tus proyectos y clientes.
+              Selecciona el módulo con el que necesitas trabajar hoy.
             </p>
+            {role === 'Sin Rol' && (
+              <div className="mt-6 bg-rose-50 border border-rose-200 text-rose-700 px-6 py-4 rounded-xl font-medium inline-block shadow-sm">
+                ⚠️ <b>Atención:</b> Tu cuenta aparece "Sin Rol". Necesitas pedirle al Administrador que te asigne tu rol en la Base de Datos para desbloquear todas las funciones.
+              </div>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
-            {/* TARJETA DE COTIZACIONES */}
-            <Link href="/cotizaciones" className="group block h-full">
-              <div className="bg-white rounded-3xl p-8 h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#8cc63f]/20 to-transparent rounded-bl-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className={`grid grid-cols-1 gap-8 ${isAdminOrEditor ? 'md:grid-cols-2' : 'max-w-2xl mx-auto'}`}>
+            
+            {/* MÓDULO DE COTIZACIONES (Oculto para reporteros y usuarios sin rol asignado) */}
+            {isAdminOrEditor && (
+              <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#8cc63f]/10 to-transparent rounded-bl-full -z-10"></div>
                 
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${BRAND.green}15`, color: BRAND.green }}>
                   <FileSpreadsheet size={32} strokeWidth={2.5} />
                 </div>
                 
-                <h3 className="text-2xl font-black mb-3 text-slate-800 group-hover:text-[#8cc63f] transition-colors">
-                  Generador de Cotizaciones
+                <h3 className="text-2xl font-black mb-3 text-slate-800">
+                  Cotizaciones
                 </h3>
                 
-                <p className="text-slate-500 mb-8 leading-relaxed">
-                  Crea cotizaciones profesionales, calcula automáticamente el IVA, incluye notas personalizadas y expórtalo a PDF para enviar a tus clientes.
+                <p className="text-slate-500 mb-8 flex-grow">
+                  Gestión de cotizaciones con cálculo automático de IVA y exportación profesional a PDF.
                 </p>
                 
-                <div className="mt-auto flex items-center text-sm font-bold uppercase tracking-wider" style={{ color: BRAND.green }}>
-                  Ir a Cotizaciones
-                  <ArrowRight size={18} className="ml-2 group-hover:translate-x-2 transition-transform" />
+                <div className="flex flex-col gap-3 mt-auto">
+                  <Link href="/cotizaciones" className="w-full text-center py-3 rounded-xl font-bold text-white shadow-md hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: BRAND.green }}>
+                    Nueva Cotización
+                  </Link>
+                  <Link href="/cotizaciones/list" className="w-full text-center py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:-translate-y-0.5 transition-transform">
+                    Base de Datos
+                  </Link>
                 </div>
               </div>
-            </Link>
+            )}
 
-            {/* TARJETA DE REPORTES */}
-            <Link href="/reportes" className="group block h-full">
-              <div className="bg-white rounded-3xl p-8 h-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#2bb6b1]/20 to-transparent rounded-bl-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${BRAND.teal}15`, color: BRAND.teal }}>
-                  <FileText size={32} strokeWidth={2.5} />
-                </div>
-                
-                <h3 className="text-2xl font-black mb-3 text-slate-800 group-hover:text-[#2bb6b1] transition-colors">
-                  Armador de Reportes
-                </h3>
-                
-                <p className="text-slate-500 mb-8 leading-relaxed">
-                  Elabora reportes de trabajos realizados con evidencia fotográfica. Carga múltiples imágenes por actividad y genera un documento listo para firmar.
-                </p>
-                
-                <div className="mt-auto flex items-center text-sm font-bold uppercase tracking-wider" style={{ color: BRAND.teal }}>
-                  Ir a Reportes
-                  <ArrowRight size={18} className="ml-2 group-hover:translate-x-2 transition-transform" />
-                </div>
+            {/* MÓDULO DE REPORTES (Visible para todos) */}
+            <div className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 relative overflow-hidden flex flex-col">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#2bb6b1]/10 to-transparent rounded-bl-full -z-10"></div>
+              
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6" style={{ backgroundColor: `${BRAND.teal}15`, color: BRAND.teal }}>
+                <FileText size={32} strokeWidth={2.5} />
               </div>
-            </Link>
+              
+              <h3 className="text-2xl font-black mb-3 text-slate-800">
+                Reportes de Trabajo
+              </h3>
+              
+              <p className="text-slate-500 mb-8 flex-grow">
+                Armado de reportes técnicos con evidencia fotográfica. Generación automática del documento para firmas.
+              </p>
+              
+              <div className="flex flex-col gap-3 mt-auto">
+                <Link href="/reportes" className="w-full text-center py-3 rounded-xl font-bold text-white shadow-md hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: BRAND.teal }}>
+                  Nuevo Reporte
+                </Link>
+                <Link href="/reportes/list" className="w-full text-center py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:-translate-y-0.5 transition-transform">
+                  Base de Datos
+                </Link>
+              </div>
+            </div>
+
           </div>
         </div>
       </main>

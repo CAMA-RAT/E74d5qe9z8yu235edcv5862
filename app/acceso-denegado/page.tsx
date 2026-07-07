@@ -14,17 +14,10 @@ export default function AccesoDenegadoPage() {
         </div>
 
         <h1 className="text-2xl font-black text-slate-800 mb-2">Acceso Restringido</h1>
-        <p className="text-slate-500 text-sm mb-8">
-          Tu cuenta no tiene permisos para acceder a esta sección del sistema.
-          Si crees que esto es un error, contacta al administrador.
+        <p className="text-slate-500 mb-8 max-w-sm mx-auto">
+          Lo sentimos, tu cuenta no tiene los permisos necesarios para acceder a este módulo. Si crees que esto es un error, contacta a tu administrador.
         </p>
 
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#175ca8] text-white font-bold rounded-xl hover:bg-[#124a8e] transition-colors text-sm"
-        >
-          ← Volver al Menú Principal
-        </Link>
       </div>
     </div>
   );

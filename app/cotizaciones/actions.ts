@@ -28,6 +28,7 @@ export async function getUserRole() {
   if (dbError) {
     // Si no se encuentra el rol o la tabla está vacía, Supabase manda error (PGRST116 con .single())
     // Retornamos "Sin Rol" en lugar de imprimir un console.error que bloquea la app
+    console.error("Error al obtener rol de BD:", dbError.message, dbError.code, dbError.details);
     return "Sin Rol";
   }
 
@@ -83,46 +84,35 @@ export async function getNextFolio(fecha: string) {
   return `${fecha}-#${maxNum + 1}`;
 }
 
-export async function saveCotizacion(payload: any) {
+import { CotizacionFormData } from '../../schema/cotizacionSchema';
+
+export async function saveCotizacion(payload: CotizacionFormData) {
   const supabase = await createClient();
   
-  // Extraemos la información del payload para armar el objeto de la DB
-  const {
-    folio,
-    fecha,
-    nombre, // cliente_nombre
-    telefono, // cliente_telefono
-    correo, // cliente_correo
-    direccion, // cliente_direccion
-    tasaIva,
-    subtotalCalculado,
-    ivaCalculado,
-    totalCalculado,
-    partidas,
-    notas
-  } = payload;
-
-  // Convertimos los formatos formateados (ej. "$1,200.00") a número puro
-  const parseCurrency = (val: string) => Number(val.replace(/[^0-9.-]+/g, ""));
+  // Calculamos los totales en el servidor por seguridad
+  const subtotal = payload.partidas.reduce((acc, p) => acc + (p.cant * p.unit), 0);
+  const iva = subtotal * ((payload.tasaIva || 16) / 100);
+  const total = subtotal + iva;
 
   const dataToInsert = {
-    folio,
-    fecha,
-    cliente_nombre: nombre,
-    cliente_telefono: telefono,
-    cliente_correo: correo,
-    cliente_direccion: direccion,
-    tasa_iva: Number(tasaIva),
-    subtotal: parseCurrency(subtotalCalculado),
-    iva: parseCurrency(ivaCalculado),
-    total: parseCurrency(totalCalculado),
-    partidas,
-    notas
+    id: payload.id,
+    folio: payload.folio,
+    fecha: payload.fecha,
+    cliente_nombre: payload.clienteData.nombre,
+    cliente_telefono: payload.clienteData.telefono,
+    cliente_correo: payload.clienteData.correo,
+    cliente_direccion: payload.clienteData.direccion,
+    tasa_iva: payload.tasaIva,
+    subtotal: subtotal,
+    iva: iva,
+    total: total,
+    partidas: payload.partidas,
+    notas: payload.notas
   };
 
   const { data, error } = await supabase
     .from('cotizaciones')
-    .insert([dataToInsert])
+    .upsert([dataToInsert]) // Upsert en caso de que quieran "sobreescribir" o actualizar una ya guardada
     .select()
     .single();
 
@@ -133,4 +123,54 @@ export async function saveCotizacion(payload: any) {
 
   revalidatePath('/cotizaciones/list');
   return { success: true, data };
+}
+
+export async function getCotizacionById(id: string) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('cotizaciones')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching cotizacion:', error);
+    return null;
+  }
+  
+  if (data) {
+    return {
+      id: data.id,
+      folio: data.folio,
+      fecha: data.fecha,
+      clienteData: {
+        nombre: data.cliente_nombre || '',
+        telefono: data.cliente_telefono || '',
+        correo: data.cliente_correo || '',
+        direccion: data.cliente_direccion || '',
+      },
+      tasaIva: data.tasa_iva || 16,
+      partidas: data.partidas || [],
+      notas: data.notas || [],
+      syncStatus: 'synced',
+      updatedAt: Date.now(),
+    };
+  }
+  return null;
+}
+
+export async function deleteCotizacion(id: string) {
+  const supabase = await createClient();
+
+  const { error: dbError } = await supabase
+    .from('cotizaciones')
+    .delete()
+    .eq('id', id);
+
+  if (dbError) {
+    return { success: false, error: dbError.message };
+  }
+
+  revalidatePath('/cotizaciones/list');
+  return { success: true };
 }

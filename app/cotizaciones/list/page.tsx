@@ -9,14 +9,9 @@ export default async function CotizacionesListPage() {
 
   return (
     <div className="p-4 md:p-8 min-h-screen bg-gray-100 text-slate-800 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <main className="max-w-6xl mx-auto space-y-6">
         <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm border border-slate-200">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Link href="/" className="text-slate-400 hover:text-slate-600 transition-colors flex items-center gap-1 text-sm font-medium">
-                ← Menú Principal
-              </Link>
-            </div>
             <h1 className="text-2xl font-black text-[#175ca8]">Base de Datos de Cotizaciones</h1>
             <p className="text-sm text-slate-500 mt-1">
               Tu rol actual es: <span className="font-bold text-slate-700 uppercase">{role || 'No autenticado'}</span>
