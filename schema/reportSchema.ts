@@ -14,6 +14,7 @@ export const ActivitySchema = z.object({
 
 export const ReportSchema = z.object({
   id: z.string(),
+  folio: z.string().optional(),
   fecha: z.string(),
   clienteData: z.object({
     nombre: z.string(),
